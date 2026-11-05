@@ -1,250 +1,105 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
     <meta charset="UTF-8">
-    <!-- 關鍵：加入 viewport 確保手機畫面不縮小變形 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系統櫃板材查詢系統 (手機優化版)</title>
+    <title>系統櫃板材查詢系統 (支援雙指放大)</title>
+    
+    <!-- 引入 Viewer.js 圖片放大套件的 CSS -->
+    <link rel="stylesheet" href="https://cloudflare.com">
+    
     <style>
-        /* 基礎樣式重設 */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; padding: 10px; }
         
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        h1 { font-size: 1.3rem; text-align: center; margin: 10px 0 15px 0; }
+        
+        /* 搜尋與控制區 */
+        .search-container { background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .search-input { padding: 12px; width: 100%; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; -webkit-appearance: none; }
+        
+        /* 分類按鈕區 */
+        .filter-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; -webkit-overflow-scrolling: touch; }
+        .filter-tabs::-webkit-scrollbar { display: none; }
+        .filter-btn { padding: 8px 14px; border: 1px solid #ddd; background: #fff; border-radius: 20px; cursor: pointer; font-size: 0.85rem; white-space: nowrap; flex-shrink: 0; transition: 0.2s; }
+        .filter-btn.active { background: #007bff; color: #fff; border-color: #007bff; }
+
+        /* 主容器 */
+        .container { display: flex; flex-direction: column; gap: 15px; max-width: 1200px; margin: 0 auto; }
+        
+        /* 右側預覽面板（手機置頂） */
+        .preview-panel { width: 100%; background: #fff; padding: 12px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; position: sticky; top: 0; z-index: 100; }
+        .preview-panel h2 { font-size: 1rem; margin-bottom: 2px; }
+        
+        /* 櫃體模擬區域 */
+        .cabinet-mockup { 
+            width: 100%; 
+            height: 180px; 
+            border-radius: 6px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold; 
+            color: #fff; 
+            text-shadow: 1px 1px 5px rgba(0,0,0,0.8); 
+            background-size: cover; 
+            background-position: center; 
+            background-repeat: no-repeat; 
+            margin-top: 8px; 
+            border: 1px solid #ddd; 
+            cursor: zoom-in;
+            position: relative;
         }
         
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            padding: 10px;
-        }
-        
-        h1 {
-            font-size: 1.3rem;
-            text-align: center;
-            margin: 10px 0 15px 0;
-        }
-        /* 搜尋與控制區：改為垂直堆疊、寬度 100% */
-        
-        .search-container {
-            background: #fff;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .search-input {
-            padding: 12px;
-            width: 100%;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1rem;
-            -webkit-appearance: none;
-        }
-        /* 消除 iOS 內建陰影 */
-        /* 分類按鈕區：手機上支援左右滑動，不強制斷行 */
-        
-        .filter-tabs {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .filter-tabs::-webkit-scrollbar {
-            display: none;
-        }
-        /* 隱藏滾動條 */
-        
-        .filter-btn {
-            padding: 8px 14px;
-            border: 1px solid #ddd;
-            background: #fff;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            white-space: nowrap;
-            flex-shrink: 0;
-            transition: 0.2s;
-        }
-        
-        .filter-btn.active {
-            background: #007bff;
+        /* 提示小標籤 */
+        .zoom-hint {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.6);
             color: #fff;
-            border-color: #007bff;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: normal;
+            text-shadow: none;
+            pointer-events: none;
         }
-        /* 主容器：手機上改為單欄垂直排列 */
-        
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        /* 右側預覽面板：在手機上「置頂釘選」 */
-        
-        .preview-panel {
-            width: 100%;
-            background: #fff;
-            padding: 12px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            /* 確保不被下方色卡遮擋 */
-        }
-        
-        .preview-panel h2 {
-            font-size: 1rem;
-            margin-bottom: 2px;
-        }
-        
-        .cabinet-mockup {
-            width: 100%;
-            height: 180px;
-            /* 手機版高度縮小，避免佔據太多螢幕 */
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #fff;
-            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            margin-top: 8px;
-            border: 1px solid #ddd;
-        }
+
+        #hiddenTargetImg { display: none; }
+
         /* 左側清單區 */
+        .list-area { width: 100%; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .no-result { display: none; text-align: center; padding: 30px; color: #999; background: #fff; border-radius: 8px; font-size: 0.9rem; }
         
-        .list-area {
-            width: 100%;
-        }
-        /* 色卡網格：手機上改為 2 欄排列，平板或大螢幕自動變 3 欄 */
+        .card { background: #fff; padding: 8px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); cursor: pointer; text-align: center; border: 2px solid transparent; transition: 0.1s; }
+        .card.active { border-color: #007bff; background-color: #f0f7ff; }
         
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-        
-        .no-result {
-            display: none;
-            text-align: center;
-            padding: 30px;
-            color: #999;
-            background: #fff;
-            border-radius: 8px;
-            font-size: 0.9rem;
-        }
-        
-        .card {
-            background: #fff;
-            padding: 8px;
-            border-radius: 8px;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-            cursor: pointer;
-            text-align: center;
-            border: 2px solid transparent;
-            transition: 0.1s;
-        }
-        
-        .card.active {
-            border-color: #007bff;
-            background-color: #f0f7ff;
-        }
-        /* 木紋預覽方塊：手機上高度稍微縮小 */
-        
-        .texture-box {
-            width: 100%;
-            height: 85px;
-            border-radius: 4px;
-            margin-bottom: 6px;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            border: 1px solid #eee;
-        }
-        
-        .card strong {
-            font-size: 0.9rem;
-            display: block;
-            margin-bottom: 2px;
-        }
-        
-        .card small {
-            font-size: 0.75rem;
-            color: #666;
-            display: block;
-        }
-        /* 💡 電腦桌機版專用樣式（螢幕寬度大於 768px 時自動切換） */
-        
+        .texture-box { width: 100%; height: 85px; border-radius: 4px; margin-bottom: 6px; background-size: cover; background-position: center; background-repeat: no-repeat; border: 1px solid #eee; }
+        .card strong { font-size: 0.9rem; display: block; margin-bottom: 2px; }
+        .card small { font-size: 0.75rem; color: #666; display: block; }
+
+        /* 電腦桌機版專用樣式 */
         @media (min-width: 768px) {
-            body {
-                padding: 20px;
-            }
-            h1 {
-                font-size: 1.5rem;
-                text-align: left;
-            }
-            .search-container {
-                flex-direction: row;
-                padding: 15px;
-            }
-            .search-input {
-                width: 250px;
-            }
-            .container {
-                flex-direction: row;
-            }
-            .list-area {
-                width: 60%;
-            }
-            .grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 15px;
-            }
-            .preview-panel {
-                width: 40%;
-                position: sticky;
-                top: 20px;
-                height: fit-content;
-                padding: 20px;
-            }
-            .cabinet-mockup {
-                height: 300px;
-                margin-top: 15px;
-            }
-            .texture-box {
-                height: 100px;
-            }
-            .card strong {
-                font-size: 1rem;
-            }
-            .card small {
-                font-size: 0.85rem;
-            }
+            body { padding: 20px; }
+            h1 { font-size: 1.5rem; text-align: left; }
+            .search-container { flex-direction: row; padding: 15px; }
+            .search-input { width: 250px; }
+            .container { flex-direction: row; }
+            .list-area { width: 60%; }
+            .grid { grid-template-columns: repeat(3, 1fr); gap: 15px; }
+            .preview-panel { width: 40%; position: sticky; top: 20px; height: fit-content; padding: 20px; }
+            .cabinet-mockup { height: 300px; margin-top: 15px; }
+            .texture-box { height: 100px; }
+            .card strong { font-size: 1rem; }
+            .card small { font-size: 0.85rem; }
         }
     </style>
 </head>
-
 <body>
-
     <h1>系統櫃板材查詢系統</h1>
 
-    <!-- 搜尋與分類功能區 -->
     <div class="search-container">
         <input type="text" id="searchInput" class="search-input" placeholder="輸入色號或名稱搜尋...">
         <div class="filter-tabs" id="filterTabs">
@@ -256,11 +111,17 @@
     </div>
 
     <div class="container">
-        <!-- 即時預覽區（手機上會置頂固定） -->
+        <!-- 即時預覽區 -->
         <div class="preview-panel">
             <h2>目前選定：<span id="selectedCode" style="color: #007bff;">-</span></h2>
             <p id="selectedName" style="font-size: 0.85rem; color: #666; margin-top: 2px;">-</p>
-            <div class="cabinet-mockup" id="mockupBox">請選擇板材</div>
+            
+            <div class="cabinet-mockup" id="mockupBox">
+                請選擇板材
+                <div class="zoom-hint">🔍 點擊放大細節</div>
+            </div>
+            
+            <img id="hiddenTargetImg" src="" alt="木紋細節預覽">
         </div>
 
         <!-- 板材清單區 -->
@@ -270,9 +131,13 @@
         </div>
     </div>
 
+    <!-- 引入 Viewer.js 圖片放大套件的 JavaScript -->
+    <script src="https://cloudflare.com"></script>
+
     <script>
-        // 資料庫維持不變（路徑與引號防錯已優化）
-        const boardTextures = [{
+        // 【板材資料庫偏好設定】
+        // 請將此處的 img 改為你自己 images 資料夾中的實體圖片名稱（注意大小寫）
+               const boardTextures = [{
             code: 'JM185',
             name: '冰島白橡',
             category: 'D2A',
@@ -586,17 +451,45 @@
         const searchInput = document.getElementById('searchInput');
         const filterBtns = document.querySelectorAll('.filter-btn');
         const noResult = document.getElementById('noResult');
+        const hiddenTargetImg = document.getElementById('hiddenTargetImg');
 
         let currentCategory = 'all';
         let searchQuery = '';
+        let galleryViewer = null;
+
+        function initViewer() {
+            if (galleryViewer) {
+                galleryViewer.destroy();
+            }
+            galleryViewer = new Viewer(hiddenTargetImg, {
+                inline: false,
+                button: true,
+                navbar: false,
+                title: true,
+                toolbar: {
+                    zoomIn: 1,
+                    zoomOut: 1,
+                    oneToOne: 1,
+                    reset: 1,
+                    rotateLeft: 0,
+                    rotateRight: 0,
+                    flipHorizontal: 0,
+                    flipVertical: 0,
+                },
+                tooltip: false,
+                movable: true,
+                zoomable: true,
+                transition: true
+            });
+        }
 
         function renderTextures() {
             grid.innerHTML = '';
-
+            
             const filteredData = boardTextures.filter(item => {
                 const matchesCategory = (currentCategory === 'all' || item.category === currentCategory);
-                const matchesSearch = item.code.toLowerCase().includes(searchQuery) ||
-                    item.name.toLowerCase().includes(searchQuery);
+                const matchesSearch = item.code.toLowerCase().includes(searchQuery) || 
+                                      item.name.toLowerCase().includes(searchQuery);
                 return matchesCategory && matchesSearch;
             });
 
@@ -605,16 +498,17 @@
                 selectedCode.textContent = '-';
                 selectedName.textContent = '-';
                 mockupBox.style.backgroundImage = 'none';
-                mockupBox.textContent = '無符合板材';
+                mockupBox.style.pointerEvents = 'none';
                 return;
             }
             noResult.style.display = 'none';
+            mockupBox.style.pointerEvents = 'auto';
 
             filteredData.forEach((item) => {
                 const card = document.createElement('div');
                 card.className = `card`;
                 card.id = `card-${item.code.replace(/\s+/g, '-')}`;
-
+                
                 card.innerHTML = `
                     <div class="texture-box" style="background-image: url('${item.img}');"></div>
                     <strong>${item.code}</strong>
@@ -625,22 +519,32 @@
             });
 
             if (filteredData.length > 0) {
-                selectTexture(filteredData[0]);
+                selectTexture(filteredData);
             }
         }
 
         function selectTexture(item) {
             document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-
+            
             const cardId = `card-${item.code.replace(/\s+/g, '-')}`;
             const activeCard = document.getElementById(cardId);
             if (activeCard) activeCard.classList.add('active');
-
+            
             selectedCode.textContent = item.code;
             selectedName.textContent = `品名：${item.name}`;
             mockupBox.style.backgroundImage = `url('${item.img}')`;
-            mockupBox.textContent = item.name;
+            
+            hiddenTargetImg.src = item.img;
+            hiddenTargetImg.alt = `${item.code} - ${item.name}`;
+            
+            initViewer();
         }
+
+        mockupBox.addEventListener('click', () => {
+            if (galleryViewer && hiddenTargetImg.src) {
+                galleryViewer.show();
+            }
+        });
 
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value.toLowerCase().trim();
@@ -651,7 +555,7 @@
             btn.addEventListener('click', (e) => {
                 filterBtns.forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
-
+                
                 currentCategory = e.target.dataset.category;
                 renderTextures();
             });
@@ -660,5 +564,4 @@
         renderTextures();
     </script>
 </body>
-
 </html>
