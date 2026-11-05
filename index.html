@@ -3,12 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
-    <!-- 關鍵：加入 viewport 確保手機畫面不縮小變形 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系統櫃板材查詢系統 (手機優化版)</title>
+    <title>系統櫃板材查詢系統 (含新增功能)</title>
     <style>
-        /* 基礎樣式重設 */
-        
         * {
             box-sizing: border-box;
             margin: 0;
@@ -22,12 +19,31 @@
             padding: 10px;
         }
         
-        h1 {
-            font-size: 1.3rem;
-            text-align: center;
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin: 10px 0 15px 0;
         }
-        /* 搜尋與控制區：改為垂直堆疊、寬度 100% */
+        
+        h1 {
+            font-size: 1.3rem;
+        }
+        
+        .btn-primary {
+            background: #28a745;
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .btn-primary:active {
+            opacity: 0.8;
+        }
         
         .search-container {
             background: #fff;
@@ -48,8 +64,6 @@
             font-size: 1rem;
             -webkit-appearance: none;
         }
-        /* 消除 iOS 內建陰影 */
-        /* 分類按鈕區：手機上支援左右滑動，不強制斷行 */
         
         .filter-tabs {
             display: flex;
@@ -62,7 +76,6 @@
         .filter-tabs::-webkit-scrollbar {
             display: none;
         }
-        /* 隱藏滾動條 */
         
         .filter-btn {
             padding: 8px 14px;
@@ -81,7 +94,6 @@
             color: #fff;
             border-color: #007bff;
         }
-        /* 主容器：手機上改為單欄垂直排列 */
         
         .container {
             display: flex;
@@ -90,7 +102,6 @@
             max-width: 1200px;
             margin: 0 auto;
         }
-        /* 右側預覽面板：在手機上「置頂釘選」 */
         
         .preview-panel {
             width: 100%;
@@ -102,7 +113,6 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            /* 確保不被下方色卡遮擋 */
         }
         
         .preview-panel h2 {
@@ -113,7 +123,6 @@
         .cabinet-mockup {
             width: 100%;
             height: 180px;
-            /* 手機版高度縮小，避免佔據太多螢幕 */
             border-radius: 6px;
             display: flex;
             align-items: center;
@@ -127,12 +136,10 @@
             margin-top: 8px;
             border: 1px solid #ddd;
         }
-        /* 左側清單區 */
         
         .list-area {
             width: 100%;
         }
-        /* 色卡網格：手機上改為 2 欄排列，平板或大螢幕自動變 3 欄 */
         
         .grid {
             display: grid;
@@ -165,7 +172,6 @@
             border-color: #007bff;
             background-color: #f0f7ff;
         }
-        /* 木紋預覽方塊：手機上高度稍微縮小 */
         
         .texture-box {
             width: 100%;
@@ -189,15 +195,86 @@
             color: #666;
             display: block;
         }
-        /* 💡 電腦桌機版專用樣式（螢幕寬度大於 768px 時自動切換） */
+
+        /* 彈出視窗樣式 (Modal) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
         
+        .modal-content {
+            background: #fff;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .modal-content h3 {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        
+        .btn-cancel {
+            background: #ccc;
+            color: #333;
+        }
+        
+        .btn-submit {
+            background: #007bff;
+            color: #fff;
+        }
+
         @media (min-width: 768px) {
             body {
                 padding: 20px;
             }
             h1 {
                 font-size: 1.5rem;
-                text-align: left;
             }
             .search-container {
                 flex-direction: row;
@@ -230,19 +307,16 @@
             .texture-box {
                 height: 100px;
             }
-            .card strong {
-                font-size: 1rem;
-            }
-            .card small {
-                font-size: 0.85rem;
-            }
         }
     </style>
 </head>
 
 <body>
 
-    <h1>系統櫃板材查詢系統</h1>
+    <div class="header-bar">
+        <h1>系統櫃板材查詢系統</h1>
+        <button class="btn-primary" id="openModalBtn">＋ 新增色號</button>
+    </div>
 
     <!-- 搜尋與分類功能區 -->
     <div class="search-container">
@@ -256,7 +330,7 @@
     </div>
 
     <div class="container">
-        <!-- 即時預覽區（手機上會置頂固定） -->
+        <!-- 即時預覽區 -->
         <div class="preview-panel">
             <h2>目前選定：<span id="selectedCode" style="color: #007bff;">-</span></h2>
             <p id="selectedName" style="font-size: 0.85rem; color: #666; margin-top: 2px;">-</p>
@@ -270,314 +344,53 @@
         </div>
     </div>
 
+    <!-- 新增色號彈出視窗 (Modal) -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <h3>新增板材色號</h3>
+            <div class="form-group">
+                <label>色號代碼 (例: JM500)</label>
+                <input type="text" id="inputCode" placeholder="請輸入色號">
+            </div>
+            <div class="form-group">
+                <label>板材名稱 (例: 摩卡橡木)</label>
+                <input type="text" id="inputName" placeholder="請輸入名稱">
+            </div>
+            <div class="form-group">
+                <label>放置區域</label>
+                <select id="inputCategory">
+                    <option value="D2A">D2A區</option>
+                    <option value="D2B">D2B區</option>
+                    <option value="W8A">W8A區</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>圖片路徑/檔名 (例: images/JM500.jpg)</label>
+                <input type="text" id="inputImg" placeholder="images/檔名.jpg" value="images/">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" id="closeModalBtn">取消</button>
+                <button class="btn-submit" id="saveBoardBtn">確認新增</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // 資料庫維持不變（路徑與引號防錯已優化）
-        const boardTextures = [{
-            code: 'JM185',
-            name: '冰島白橡',
-            category: 'D2A',
-            img: 'images/JM185.jpg'
+        // 原始內建資料庫
+        const defaultTextures = [{
+            code: 'JM185', name: '冰島白橡', category: 'D2A', img: 'images/JM185.jpg'
         }, {
-            code: 'JM202',
-            name: '淺灰',
-            category: 'D2A',
-            img: 'images/JM202.jpg'
+            code: 'JM202', name: '淺灰', category: 'D2A', img: 'images/JM202.jpg'
         }, {
-            code: 'ER206',
-            name: '黑色義大利石板',
-            category: 'D2A',
-            img: 'images/F206.jpg'
+            code: 'ER206', name: '黑色義大利石板', category: 'D2A', img: 'images/F206.jpg'
         }, {
-            code: 'JM287',
-            name: '黑部山',
-            category: 'D2A',
-            img: 'images/JM287.jpg'
+            code: 'JM287', name: '黑部山', category: 'D2A', img: 'images/JM287.jpg'
         }, {
-            code: 'JM333',
-            name: '鄉村白橡',
-            category: 'D2A',
-            img: 'images/JM333.jpg'
-        }, {
-            code: 'JM353',
-            name: '雪印梣木',
-            category: 'D2A',
-            img: 'images/JM353.jpg'
-        }, {
-            code: 'JM394',
-            name: '布紋灰',
-            category: 'D2A',
-            img: 'images/JM394.jpg'
-        }, {
-            code: 'JM395',
-            name: '布紋棕',
-            category: 'D2A',
-            img: 'images/JM395.jpg'
-        }, {
-            code: 'JM396',
-            name: '銀狐',
-            category: 'D2A',
-            img: 'images/JM395.jpg'
-        }, {
-            code: 'JM512',
-            name: '淺織紋',
-            category: 'D2A',
-            img: 'images/JM512.jpg'
-        }, {
-            code: 'JM515',
-            name: '白岩川',
-            category: 'D2A',
-            img: 'images/JM515.jpg'
-        }, {
-            code: 'JM522',
-            name: '南卡原始橡木',
-            category: 'D2A',
-            img: 'images/JM522.jpg'
-        }, {
-            code: 'JM543',
-            name: '卡瑪拉砂岩',
-            category: 'D2A',
-            img: 'images/JM543.jpg'
-        }, {
-            code: 'ER649',
-            name: '白色珪藻土',
-            category: 'D2A',
-            img: 'images/F649.jpg'
-        }, {
-            code: 'ER812',
-            name: '白色萊萬托大理石',
-            category: 'D2A',
-            img: 'images/F812.jpg'
-        }, {
-            code: 'AR1377',
-            name: '奧爾良沙棕橡木',
-            category: 'D2A',
-            img: 'images/H1377.jpg'
-        }, {
-            code: 'ER1714',
-            name: '林肯胡桃木',
-            category: 'D2A',
-            img: 'images/H1714.jpg'
-        }, {
-            code: 'ER3332',
-            name: '古典灰橡木',
-            category: 'D2A',
-            img: 'images/H3332.jpg'
-        }, {
-            code: 'ER3349',
-            name: '凱塞斯堡橡木',
-            category: 'D2A',
-            img: 'images/H3349.jpg'
-        }, {
-            code: 'ER3700',
-            name: '鄉村胡桃木',
-            category: 'D2A',
-            img: 'images/H3700.jpg'
-        }, {
-            code: 'ER1000',
-            name: '消光木紋白',
-            category: 'D2A',
-            img: 'images/W1000ST19.jpg'
-        }, {
-            code: 'JM201H2',
-            name: '美白山形紋',
-            category: 'D2A',
-            img: 'images/JM201H2.jpg'
-        }, {
-            code: 'JM558NA',
-            name: '薩索棕栗木',
-            category: 'D2A',
-            img: 'images/JM558.jpg'
-        }, {
-            code: 'JM559NA',
-            name: '薩索白栗木',
-            category: 'D2A',
-            img: 'images/JM559.jpg'
-        }, {
-            code: 'ER702',
-            name: '克拉米色',
-            category: 'D2B',
-            img: 'images/U702ST19.jpg'
-        }, {
-            code: 'ER417',
-            name: '灰色布紋',
-            category: 'D2B',
-            img: 'images/F417.jpg'
-        }, {
-            code: 'ER1300',
-            name: '瓦爾米亞自然橡木',
-            category: 'D2B',
-            img: 'images/H1300.jpg'
-        }, {
-            code: 'AR1000',
-            name: '仿實木紋白',
-            category: 'D2B',
-            img: 'images/W1000ST28.jpg'
-        }, {
-            code: 'JM201T2',
-            name: '美白',
-            category: 'D2B',
-            img: 'images/JM201T2.jpg'
-        }, {
-            code: 'ER115',
-            name: '克拉米色',
-            category: 'D2B',
-            img: 'images/U115.jpg'
-        }, {
-            code: 'ER121',
-            name: '碳黑金屬岩',
-            category: 'D2B',
-            img: 'images/F121.jpg'
-        }, {
-            code: 'ER325',
-            name: '復古玫瑰',
-            category: 'D2B',
-            img: 'images/U325.jpg'
-        }, {
-            code: 'ER540',
-            name: '牛仔藍',
-            category: 'D2B',
-            img: 'images/U540.jpg'
-        }, {
-            code: 'ER628',
-            name: '銀灰石板',
-            category: 'D2B',
-            img: 'images/F628.jpg'
-        }, {
-            code: 'ER629',
-            name: '黑金石板',
-            category: 'D2B',
-            img: 'images/F629.jpg'
-        }, {
-            code: 'ER636',
-            name: '海灣綠',
-            category: 'D2B',
-            img: 'images/U636.jpg'
-        }, {
-            code: 'ER637',
-            name: '水洗清水模',
-            category: 'D2B',
-            img: 'images/F637.jpg'
-        }, {
-            code: 'ER638',
-            name: '銀灰清水模',
-            category: 'D2B',
-            img: 'images/F638.jpg'
-        }, {
-            code: 'ER642',
-            name: '銅鏽清水模',
-            category: 'D2B',
-            img: 'images/F642.jpg'
-        }, {
-            code: 'ER646',
-            name: '藍綠色',
-            category: 'D2B',
-            img: 'images/U646.jpg'
-        }, {
-            code: 'ER702',
-            name: '米灰色羊絨',
-            category: 'D2B',
-            img: 'images/U702ST9.jpg'
-        }, {
-            code: 'ER708',
-            name: '淺灰色',
-            category: 'D2B',
-            img: 'images/U708.jpg'
-        }, {
-            code: 'ER727',
-            name: '石頭灰',
-            category: 'D2B',
-            img: 'images/U727ST9.jpg'
-        }, {
-            code: 'ER732',
-            name: '深灰色',
-            category: 'D2B',
-            img: 'images/U732.jpg'
-        }, {
-            code: 'ER780',
-            name: '花崗岩灰',
-            category: 'D2B',
-            img: 'images/U732.jpg'
-        }, {
-            code: 'ER928',
-            name: '優質白',
-            category: 'D2B',
-            img: 'images/W928.jpg'
-        }, {
-            code: 'ER960',
-            name: '瑪瑙灰',
-            category: 'D2B',
-            img: 'images/U960.jpg'
-        }, {
-            code: 'ER1150',
-            name: '自然灰橡木',
-            category: 'D2B',
-            img: 'images/H1150.jpg'
-        }, {
-            code: 'ER1145',
-            name: '自然巴多利諾橡木',
-            category: 'D2B',
-            img: 'images/H1145.jpg'
-        }, {
-            code: 'ER1267',
-            name: '鄉村梣木',
-            category: 'D2B',
-            img: 'images/H1267.jpg'
-        }, {
-            code: 'ER1277',
-            name: '淺色萊克蘭刺槐',
-            category: 'D2B',
-            img: 'images/H1277.jpg'
-        }, {
-            code: 'ER1710',
-            name: '肯塔基沙粉板栗木',
-            category: 'D2B',
-            img: 'images/H1710.jpg'
-        }, {
-            code: 'ER3060',
-            name: '白色北歐木',
-            category: 'D2B',
-            img: 'images/H3060.jpg'
-        }, {
-            code: 'ER3078',
-            name: '珍珠白梣木',
-            category: 'D2B',
-            img: 'images/H3078.jpg'
-        }, {
-            code: 'ER3081',
-            name: '碳黑梣木',
-            category: 'D2B',
-            img: 'images/H3081.jpg'
-        }, {
-            code: 'ER3133',
-            name: '松露棕達沃斯橡木',
-            category: 'D2B',
-            img: 'images/H3133.jpg'
-        }, {
-            code: 'ER3156',
-            name: '灰色科布里奇橡木',
-            category: 'D2B',
-            img: 'images/H3156.jpg'
-        }, {
-            code: 'ER3450',
-            name: '白弗利特木',
-            category: 'D2B',
-            img: 'images/H3450.jpg'
-        }, {
-            code: 'ER3430',
-            name: '米白奧蘭松木',
-            category: 'D2B',
-            img: 'images/H3430.jpg'
-        }, {
-            code: 'S-909',
-            name: '現代清水模',
-            category: 'W8A',
-            img: 'images/stone1.png'
-        }, {
-            code: 'S-915',
-            name: '皇家大理石',
-            category: 'W8A',
-            img: 'images/stone2.png'
+            code: 'S-909', name: '現代清水模', category: 'W8A', img: 'images/stone1.png'
         }];
+
+        // 從 LocalStorage 載入資料，若無則使用預設資料
+        let boardTextures = JSON.parse(localStorage.getItem('boardTextures')) || defaultTextures;
 
         const grid = document.getElementById('colorGrid');
         const mockupBox = document.getElementById('mockupBox');
@@ -586,6 +399,16 @@
         const searchInput = document.getElementById('searchInput');
         const filterBtns = document.querySelectorAll('.filter-btn');
         const noResult = document.getElementById('noResult');
+
+        // Modal 相關元素
+        const addModal = document.getElementById('addModal');
+        const openModalBtn = document.getElementById('openModalBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const saveBoardBtn = document.getElementById('saveBoardBtn');
+        const inputCode = document.getElementById('inputCode');
+        const inputName = document.getElementById('inputName');
+        const inputCategory = document.getElementById('inputCategory');
+        const inputImg = document.getElementById('inputImg');
 
         let currentCategory = 'all';
         let searchQuery = '';
@@ -631,7 +454,6 @@
 
         function selectTexture(item) {
             document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
-
             const cardId = `card-${item.code.replace(/\s+/g, '-')}`;
             const activeCard = document.getElementById(cardId);
             if (activeCard) activeCard.classList.add('active');
@@ -642,6 +464,7 @@
             mockupBox.textContent = item.name;
         }
 
+        // 搜尋與篩選事件
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value.toLowerCase().trim();
             renderTextures();
@@ -651,10 +474,47 @@
             btn.addEventListener('click', (e) => {
                 filterBtns.forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
-
                 currentCategory = e.target.dataset.category;
                 renderTextures();
             });
+        });
+
+        // 彈出視窗控制
+        openModalBtn.addEventListener('click', () => {
+            addModal.style.display = 'flex';
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            addModal.style.display = 'none';
+        });
+
+        // 儲存新板材
+        saveBoardBtn.addEventListener('click', () => {
+            const code = inputCode.value.trim();
+            const name = inputName.value.trim();
+            const category = inputCategory.value;
+            const img = inputImg.value.trim() || 'images/default.jpg';
+
+            if (!code || !name) {
+                alert('請填寫完整色號與名稱！');
+                return;
+            }
+
+            // 新增至陣列開頭
+            boardTextures.unshift({ code, name, category, img });
+
+            // 存入瀏覽器 LocalStorage
+            localStorage.setItem('boardTextures', JSON.stringify(boardTextures));
+
+            // 清空表單並關閉視窗
+            inputCode.value = '';
+            inputName.value = '';
+            inputImg.value = 'images/';
+            addModal.style.display = 'none';
+
+            // 重新渲染畫面
+            renderTextures();
+            alert(`成功新增色號：${code}`);
         });
 
         renderTextures();
