@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系統櫃板材查詢系統 (含新增功能)</title>
+    <title>系統櫃板材查詢系統</title>
+    <!-- 引入 SheetJS 讓網頁直接支援讀取 .xlsx 檔案 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -24,24 +26,42 @@
             justify-content: space-between;
             align-items: center;
             margin: 10px 0 15px 0;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
         h1 {
             font-size: 1.3rem;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 8px;
         }
         
         .btn-primary {
             background: #28a745;
             color: #fff;
             border: none;
-            padding: 8px 14px;
+            padding: 8px 12px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .btn-excel {
+            background: #17a2b8;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
             font-weight: bold;
         }
         
-        .btn-primary:active {
+        .btn-primary:active, .btn-excel:active {
             opacity: 0.8;
         }
         
@@ -315,7 +335,12 @@
 
     <div class="header-bar">
         <h1>系統櫃板材查詢系統</h1>
-        <button class="btn-primary" id="openModalBtn">＋ 新增色號</button>
+        <div class="header-buttons">
+            <button class="btn-primary" id="openModalBtn">＋ 單筆新增</button>
+            <button class="btn-excel" onclick="document.getElementById('excelFileInput').click()">📊 匯入 Excel</button>
+            <!-- 隱藏的檔案上傳 input -->
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display:none;">
+        </div>
     </div>
 
     <!-- 搜尋與分類功能區 -->
@@ -344,10 +369,10 @@
         </div>
     </div>
 
-    <!-- 新增色號彈出視窗 (Modal) -->
+    <!-- 單筆新增色號彈出視窗 (Modal) -->
     <div class="modal" id="addModal">
         <div class="modal-content">
-            <h3>新增板材色號</h3>
+            <h3>單筆新增板材色號</h3>
             <div class="form-group">
                 <label>色號代碼 (例: JM500)</label>
                 <input type="text" id="inputCode" placeholder="請輸入色號">
@@ -376,7 +401,7 @@
     </div>
 
     <script>
-        // 原始內建資料庫
+        // 原始內建預設資料庫
         const defaultTextures = [{
             code: 'JM185', name: '冰島白橡', category: 'D2A', img: 'images/JM185.jpg'
         }, {
@@ -479,7 +504,7 @@
             });
         });
 
-        // 彈出視窗控制
+        // 彈出視窗控制 (單筆新增)
         openModalBtn.addEventListener('click', () => {
             addModal.style.display = 'flex';
         });
@@ -488,7 +513,7 @@
             addModal.style.display = 'none';
         });
 
-        // 儲存新板材
+        // 儲存單筆新板材
         saveBoardBtn.addEventListener('click', () => {
             const code = inputCode.value.trim();
             const name = inputName.value.trim();
@@ -500,25 +525,10 @@
                 return;
             }
 
-            // 新增至陣列開頭
             boardTextures.unshift({ code, name, category, img });
-
-            // 存入瀏覽器 LocalStorage
             localStorage.setItem('boardTextures', JSON.stringify(boardTextures));
 
-            // 清空表單並關閉視窗
             inputCode.value = '';
             inputName.value = '';
             inputImg.value = 'images/';
-            addModal.style.display = 'none';
-
-            // 重新渲染畫面
-            renderTextures();
-            alert(`成功新增色號：${code}`);
-        });
-
-        renderTextures();
-    </script>
-</body>
-
-</html>
+            addModal.
