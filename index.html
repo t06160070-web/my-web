@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系統櫃板材查詢系統</title>
-    <!-- 引入 SheetJS 支援 Excel 匯入 -->
+    <title>系統櫃板材查詢系統 (穩定匯入版)</title>
+    <!-- 引入 SheetJS 支援 Excel 讀取與匯出 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * {
@@ -51,8 +51,8 @@
             font-weight: bold;
         }
 
-        .btn-excel {
-            background: #17a2b8;
+        .btn-template {
+            background: #6c757d;
             color: #fff;
             border: none;
             padding: 8px 12px;
@@ -62,10 +62,29 @@
             font-weight: bold;
         }
         
-        .btn-primary:active, .btn-excel:active {
+        .btn-primary:active, .btn-template:active {
             opacity: 0.8;
         }
         
+        /* 匯入操作面板區 */
+        .import-panel {
+            background: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .import-panel label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+
         .search-container {
             background: #fff;
             padding: 12px;
@@ -219,7 +238,7 @@
 
         /* 彈出視窗樣式 (Modal) */
         .modal {
-            display: none; /* 預設隱藏 */
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
@@ -338,9 +357,14 @@
         <h1>系統櫃板材查詢系統</h1>
         <div class="header-buttons">
             <button class="btn-primary" id="openModalBtn">＋ 單筆新增</button>
-            <button class="btn-excel" onclick="document.getElementById('excelFileInput').click()">📊 匯入 Excel</button>
-            <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display:none;">
+            <button class="btn-template" id="downloadTemplateBtn">📥 下載 Excel 範本</button>
         </div>
+    </div>
+
+    <!-- 顯性匯入面板（保證絕對點得到、能上傳） -->
+    <div class="import-panel">
+        <label>📊 批次匯入 Excel：</label>
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="font-size: 0.85rem;">
     </div>
 
     <!-- 搜尋與分類功能區 -->
@@ -401,7 +425,7 @@
     </div>
 
     <script>
-        // 預設資料庫（包含你剛才提供的完整清單）
+        // 預設資料庫
         const defaultTextures = [{
             code: 'JM185', name: '冰島白橡', category: 'D2A', img: 'images/JM185.jpg'
         }, {
@@ -526,7 +550,6 @@
             code: 'S-915', name: '皇家大理石', category: 'W8A', img: 'images/stone2.png'
         }];
 
-        // 從 LocalStorage 載入資料，若無則使用預設清單
         let boardTextures = JSON.parse(localStorage.getItem('boardTextures')) || defaultTextures;
 
         const grid = document.getElementById('colorGrid');
@@ -537,7 +560,6 @@
         const filterBtns = document.querySelectorAll('.filter-btn');
         const noResult = document.getElementById('noResult');
 
-        // Modal 相關元素
         const addModal = document.getElementById('addModal');
         const openModalBtn = document.getElementById('openModalBtn');
         const closeModalBtn = document.getElementById('closeModalBtn');
@@ -552,7 +574,6 @@
 
         function renderTextures() {
             grid.innerHTML = '';
-
             const filteredData = boardTextures.filter(item => {
                 const matchesCategory = (currentCategory === 'all' || item.category === currentCategory);
                 const matchesSearch = item.code.toLowerCase().includes(searchQuery) ||
@@ -574,7 +595,6 @@
                 const card = document.createElement('div');
                 card.className = `card`;
                 card.id = `card-${item.code.replace(/\s+/g, '-')}`;
-
                 card.innerHTML = `
                     <div class="texture-box" style="background-image: url('${item.img}');"></div>
                     <strong>${item.code}</strong>
@@ -601,7 +621,6 @@
             mockupBox.textContent = item.name;
         }
 
-        // 搜尋與篩選事件
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value.toLowerCase().trim();
             renderTextures();
@@ -616,29 +635,18 @@
             });
         });
 
-        // 彈出視窗控制 (單筆新增) - 加上防呆確保按鈕存在才綁定
         if (openModalBtn && addModal) {
-            openModalBtn.addEventListener('click', () => {
-                addModal.style.display = 'flex';
-            });
+            openModalBtn.addEventListener('click', () => addModal.style.display = 'flex');
         }
-
         if (closeModalBtn && addModal) {
-            closeModalBtn.addEventListener('click', () => {
-                addModal.style.display = 'none';
-            });
+            closeModalBtn.addEventListener('click', () => addModal.style.display = 'none');
         }
-
-        // 點擊 Modal 灰色背景也能關閉
         if (addModal) {
             addModal.addEventListener('click', (e) => {
-                if (e.target === addModal) {
-                    addModal.style.display = 'none';
-                }
+                if (e.target === addModal) addModal.style.display = 'none';
             });
         }
 
-        // 儲存單筆新板材
         if (saveBoardBtn) {
             saveBoardBtn.addEventListener('click', () => {
                 const code = inputCode.value.trim();
@@ -658,13 +666,25 @@
                 inputName.value = '';
                 inputImg.value = 'images/';
                 addModal.style.display = 'none';
-
                 renderTextures();
                 alert(`成功新增色號：${code}`);
             });
         }
 
-        // Excel (.xlsx) 智慧匯入功能
+        // 下載 Excel 範本功能
+        document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
+            const templateData = [
+                ["色號代碼", "板材名稱", "放置區域", "圖片路徑"],
+                ["JM500", "摩卡橡木", "D2A", "images/JM500.jpg"],
+                ["ER800", "極光白石", "D2B", "images/ER800.jpg"]
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "板材清單");
+            XLSX.writeFile(wb, "板材匯入範本.xlsx");
+        });
+
+        // 顯性 Excel 檔案匯入處理
         const excelInput = document.getElementById('excelFileInput');
         if (excelInput) {
             excelInput.addEventListener('change', function(e) {
@@ -676,7 +696,6 @@
                     try {
                         const data = new Uint8Array(event.target.result);
                         const workbook = XLSX.read(data, { type: 'array' });
-                        
                         const firstSheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[firstSheetName];
                         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
@@ -685,7 +704,7 @@
                         let newCount = 0;
 
                         jsonData.forEach((row, index) => {
-                            if (index === 0 || !row || row.length === 0) return;
+                            if (index === 0 || !row || row.length === 0) return; // 跳過標題
                             
                             const code = row[0] ? String(row[0]).trim() : '';
                             const name = row[1] ? String(row[1]).trim() : '';
@@ -708,19 +727,17 @@
 
                         localStorage.setItem('boardTextures', JSON.stringify(boardTextures));
                         renderTextures();
-                        
-                        alert(`Excel 匯入完成！\n新增了 ${newCount} 筆新色號\n更新了 ${updateCount} 筆既有色號`);
+                        alert(`Excel 匯入成功！\n新增了 ${newCount} 筆新色號\n更新了 ${updateCount} 筆既有色號`);
                     } catch (error) {
                         alert('讀取 Excel 發生錯誤，請確認檔案格式是否正確！');
                         console.error(error);
                     }
-                    e.target.value = '';
+                    excelInput.value = ''; // 清空讓同檔案可再次觸發
                 };
                 reader.readAsArrayBuffer(file);
             });
         }
 
-        // 初始化渲染
         renderTextures();
     </script>
 </body>
