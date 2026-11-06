@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系統櫃板材查詢系統 (穩定獨立版)</title>
+    <title>系統櫃板材查詢系統 (穩定匯入版)</title>
+    <!-- 引入 SheetJS 支援 Excel 讀取與匯出 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -49,8 +51,8 @@
             font-weight: bold;
         }
 
-        .btn-info {
-            background: #17a2b8;
+        .btn-template {
+            background: #6c757d;
             color: #fff;
             border: none;
             padding: 8px 12px;
@@ -60,31 +62,29 @@
             font-weight: bold;
         }
         
-        .btn-primary:active, .btn-info:active {
+        .btn-primary:active, .btn-template:active {
             opacity: 0.8;
         }
         
-        /* 批次貼上匯入面板 */
-        .batch-panel {
+        /* 匯入操作面板區 */
+        .import-panel {
             background: #fff;
             padding: 12px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
             margin-bottom: 15px;
-            display: none; /* 預設隱藏，點擊按鈕展開 */
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .batch-panel textarea {
-            width: 100%;
-            height: 80px;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         
+        .import-panel label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+
         .search-container {
             background: #fff;
             padding: 12px;
@@ -175,7 +175,6 @@
             background-repeat: no-repeat;
             margin-top: 8px;
             border: 1px solid #ddd;
-            background-color: #333;
         }
         
         .list-area {
@@ -223,7 +222,6 @@
             background-position: center;
             background-repeat: no-repeat;
             border: 1px solid #eee;
-            background-color: #ddd;
         }
         
         .card strong {
@@ -359,17 +357,14 @@
         <h1>系統櫃板材查詢系統</h1>
         <div class="header-buttons">
             <button class="btn-primary" id="openModalBtn">＋ 單筆新增</button>
-            <button class="btn-info" id="toggleBatchBtn">📋 批次貼上匯入</button>
+            <button class="btn-template" id="downloadTemplateBtn">📥 下載 Excel 範本</button>
         </div>
     </div>
 
-    <!-- 批次貼上面板 -->
-    <div class="batch-panel" id="batchPanel">
-        <label style="font-size: 0.85rem; font-weight: bold; color: #007bff;">從 Excel 複製多行資料直接貼到下方（格式：色號 Tab 名稱 Tab 分區 Tab 圖片路徑）：</label>
-        <textarea id="batchInput" placeholder="例如：
-JM500	摩卡橡木	D2A	images/JM500.jpg
-ER800	極光白石	D2B	images/ER800.jpg"></textarea>
-        <button class="btn-primary" id="submitBatchBtn" style="align-self: flex-end; padding: 6px 14px;">確認批次匯入</button>
+    <!-- 顯性匯入面板（保證絕對點得到、能上傳） -->
+    <div class="import-panel">
+        <label>📊 批次匯入 Excel：</label>
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="font-size: 0.85rem;">
     </div>
 
     <!-- 搜尋與分類功能區 -->
@@ -430,7 +425,7 @@ ER800	極光白石	D2B	images/ER800.jpg"></textarea>
     </div>
 
     <script>
-        // 預設資料庫（內建你提供的 60 筆資料）
+        // 預設資料庫
         const defaultTextures = [{
             code: 'JM185', name: '冰島白橡', category: 'D2A', img: 'images/JM185.jpg'
         }, {
@@ -574,11 +569,6 @@ ER800	極光白石	D2B	images/ER800.jpg"></textarea>
         const inputCategory = document.getElementById('inputCategory');
         const inputImg = document.getElementById('inputImg');
 
-        const toggleBatchBtn = document.getElementById('toggleBatchBtn');
-        const batchPanel = document.getElementById('batchPanel');
-        const batchInput = document.getElementById('batchInput');
-        const submitBatchBtn = document.getElementById('submitBatchBtn');
-
         let currentCategory = 'all';
         let searchQuery = '';
 
@@ -645,82 +635,108 @@ ER800	極光白石	D2B	images/ER800.jpg"></textarea>
             });
         });
 
-        // 彈出視窗開關
-        openModalBtn.addEventListener('click', () => addModal.style.display = 'flex');
-        closeModalBtn.addEventListener('click', () => addModal.style.display = 'none');
-        addModal.addEventListener('click', (e) => {
-            if (e.target === addModal) addModal.style.display = 'none';
-        });
-
-        // 單筆新增儲存
-        saveBoardBtn.addEventListener('click', () => {
-            const code = inputCode.value.trim();
-            const name = inputName.value.trim();
-            const category = inputCategory.value;
-            const img = inputImg.value.trim() || `images/${code}.jpg`;
-
-            if (!code || !name) {
-                alert('請填寫完整色號與名稱！');
-                return;
-            }
-
-            boardTextures.unshift({ code, name, category, img });
-            localStorage.setItem('boardTextures', JSON.stringify(boardTextures));
-
-            inputCode.value = '';
-            inputName.value = '';
-            inputImg.value = 'images/';
-            addModal.style.display = 'none';
-            renderTextures();
-            alert(`成功新增色號：${code}`);
-        });
-
-        // 切換批次匯入面板顯示
-        toggleBatchBtn.addEventListener('click', () => {
-            batchPanel.style.display = batchPanel.style.display === 'flex' ? 'none' : 'flex';
-        });
-
-        // 執行批次貼上匯入
-        submitBatchBtn.addEventListener('click', () => {
-            const text = batchInput.value.trim();
-            if (!text) {
-                alert('請先貼上資料！');
-                return;
-            }
-
-            const lines = text.split('\n');
-            let newCount = 0;
-            let updateCount = 0;
-
-            lines.forEach(line => {
-                const parts = line.split('\t'); // Excel 複製貼上預設用 Tab 分隔欄位
-                if (parts.length >= 2) {
-                    const code = parts[0].trim();
-                    const name = parts[1].trim();
-                    const category = parts[2] ? parts[2].trim() : 'D2A';
-                    const img = parts[3] ? parts[3].trim() : `images/${code}.jpg`;
-
-                    if (code && name) {
-                        const existingIndex = boardTextures.findIndex(b => b.code.toLowerCase() === code.toLowerCase());
-                        const boardData = { code, name, category, img };
-
-                        if (existingIndex > -1) {
-                            boardTextures[existingIndex] = boardData;
-                            updateCount++;
-                        } else {
-                            boardTextures.unshift(boardData);
-                            newCount++;
-                        }
-                    }
-                }
+        if (openModalBtn && addModal) {
+            openModalBtn.addEventListener('click', () => addModal.style.display = 'flex');
+        }
+        if (closeModalBtn && addModal) {
+            closeModalBtn.addEventListener('click', () => addModal.style.display = 'none');
+        }
+        if (addModal) {
+            addModal.addEventListener('click', (e) => {
+                if (e.target === addModal) addModal.style.display = 'none';
             });
+        }
 
-            localStorage.setItem('boardTextures', JSON.stringify(boardTextures));
-            renderTextures();
-            batchInput.value = '';
-            batchPanel.style.display = 'none';
-            alert(`批次匯入完成！\n新增了 ${newCount} 筆\n更新了 ${updateCount} 筆`);
+        if (saveBoardBtn) {
+            saveBoardBtn.addEventListener('click', () => {
+                const code = inputCode.value.trim();
+                const name = inputName.value.trim();
+                const category = inputCategory.value;
+                const img = inputImg.value.trim() || 'images/default.jpg';
+
+                if (!code || !name) {
+                    alert('請填寫完整色號與名稱！');
+                    return;
+                }
+
+                boardTextures.unshift({ code, name, category, img });
+                localStorage.setItem('boardTextures', JSON.stringify(boardTextures));
+
+                inputCode.value = '';
+                inputName.value = '';
+                inputImg.value = 'images/';
+                addModal.style.display = 'none';
+                renderTextures();
+                alert(`成功新增色號：${code}`);
+            });
+        }
+
+        // 下載 Excel 範本功能
+        document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
+            const templateData = [
+                ["色號代碼", "板材名稱", "放置區域", "圖片路徑"],
+                ["JM500", "摩卡橡木", "D2A", "images/JM500.jpg"],
+                ["ER800", "極光白石", "D2B", "images/ER800.jpg"]
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(templateData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "板材清單");
+            XLSX.writeFile(wb, "板材匯入範本.xlsx");
         });
+
+        // 顯性 Excel 檔案匯入處理
+        const excelInput = document.getElementById('excelFileInput');
+        if (excelInput) {
+            excelInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        
+                        let updateCount = 0;
+                        let newCount = 0;
+
+                        jsonData.forEach((row, index) => {
+                            if (index === 0 || !row || row.length === 0) return; // 跳過標題
+                            
+                            const code = row[0] ? String(row[0]).trim() : '';
+                            const name = row[1] ? String(row[1]).trim() : '';
+                            const category = row[2] ? String(row[2]).trim() : 'D2A';
+                            const img = row[3] ? String(row[3]).trim() : `images/${code}.jpg`;
+
+                            if (code && name) {
+                                const existingIndex = boardTextures.findIndex(b => b.code.toLowerCase() === code.toLowerCase());
+                                const boardData = { code, name, category, img };
+
+                                if (existingIndex > -1) {
+                                    boardTextures[existingIndex] = boardData;
+                                    updateCount++;
+                                } else {
+                                    boardTextures.unshift(boardData);
+                                    newCount++;
+                                }
+                            }
+                        });
+
+                        localStorage.setItem('boardTextures', JSON.stringify(boardTextures));
+                        renderTextures();
+                        alert(`Excel 匯入成功！\n新增了 ${newCount} 筆新色號\n更新了 ${updateCount} 筆既有色號`);
+                    } catch (error) {
+                        alert('讀取 Excel 發生錯誤，請確認檔案格式是否正確！');
+                        console.error(error);
+                    }
+                    excelInput.value = ''; // 清空讓同檔案可再次觸發
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
 
         renderTextures();
     </script>
