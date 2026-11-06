@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>系統櫃板材查詢系統</title>
-    <!-- 引入 SheetJS 讓網頁直接支援讀取 .xlsx 檔案 -->
+    <!-- 引入 SheetJS 支援 Excel 匯入 -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * {
@@ -37,6 +37,7 @@
         .header-buttons {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
         
         .btn-primary {
@@ -218,7 +219,7 @@
 
         /* 彈出視窗樣式 (Modal) */
         .modal {
-            display: none;
+            display: none; /* 預設隱藏 */
             position: fixed;
             top: 0;
             left: 0;
@@ -338,7 +339,6 @@
         <div class="header-buttons">
             <button class="btn-primary" id="openModalBtn">＋ 單筆新增</button>
             <button class="btn-excel" onclick="document.getElementById('excelFileInput').click()">📊 匯入 Excel</button>
-            <!-- 隱藏的檔案上傳 input -->
             <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display:none;">
         </div>
     </div>
@@ -401,7 +401,7 @@
     </div>
 
     <script>
-        // 原始內建預設資料庫
+        // 預設資料庫（包含你剛才提供的完整清單）
         const defaultTextures = [{
             code: 'JM185', name: '冰島白橡', category: 'D2A', img: 'images/JM185.jpg'
         }, {
@@ -411,10 +411,122 @@
         }, {
             code: 'JM287', name: '黑部山', category: 'D2A', img: 'images/JM287.jpg'
         }, {
+            code: 'JM333', name: '鄉村白橡', category: 'D2A', img: 'images/JM333.jpg'
+        }, {
+            code: 'JM353', name: '雪印梣木', category: 'D2A', img: 'images/JM353.jpg'
+        }, {
+            code: 'JM394', name: '布紋灰', category: 'D2A', img: 'images/JM394.jpg'
+        }, {
+            code: 'JM395', name: '布紋棕', category: 'D2A', img: 'images/JM395.jpg'
+        }, {
+            code: 'JM396', name: '銀狐', category: 'D2A', img: 'images/JM395.jpg'
+        }, {
+            code: 'JM512', name: '淺織紋', category: 'D2A', img: 'images/JM512.jpg'
+        }, {
+            code: 'JM515', name: '白岩川', category: 'D2A', img: 'images/JM515.jpg'
+        }, {
+            code: 'JM522', name: '南卡原始橡木', category: 'D2A', img: 'images/JM522.jpg'
+        }, {
+            code: 'JM543', name: '卡瑪拉砂岩', category: 'D2A', img: 'images/JM543.jpg'
+        }, {
+            code: 'ER649', name: '白色珪藻土', category: 'D2A', img: 'images/F649.jpg'
+        }, {
+            code: 'ER812', name: '白色萊萬托大理石', category: 'D2A', img: 'images/F812.jpg'
+        }, {
+            code: 'AR1377', name: '奧爾良沙棕橡木', category: 'D2A', img: 'images/H1377.jpg'
+        }, {
+            code: 'ER1714', name: '林肯胡桃木', category: 'D2A', img: 'images/H1714.jpg'
+        }, {
+            code: 'ER3332', name: '古典灰橡木', category: 'D2A', img: 'images/H3332.jpg'
+        }, {
+            code: 'ER3349', name: '凱塞斯堡橡木', category: 'D2A', img: 'images/H3349.jpg'
+        }, {
+            code: 'ER3700', name: '鄉村胡桃木', category: 'D2A', img: 'images/H3700.jpg'
+        }, {
+            code: 'ER1000', name: '消光木紋白', category: 'D2A', img: 'images/W1000ST19.jpg'
+        }, {
+            code: 'JM201H2', name: '美白山形紋', category: 'D2A', img: 'images/JM201H2.jpg'
+        }, {
+            code: 'JM558NA', name: '薩索棕栗木', category: 'D2A', img: 'images/JM558.jpg'
+        }, {
+            code: 'JM559NA', name: '薩索白栗木', category: 'D2A', img: 'images/JM559.jpg'
+        }, {
+            code: 'ER702', name: '克拉米色', category: 'D2B', img: 'images/U702ST19.jpg'
+        }, {
+            code: 'ER417', name: '灰色布紋', category: 'D2B', img: 'images/F417.jpg'
+        }, {
+            code: 'ER1300', name: '瓦爾米亞自然橡木', category: 'D2B', img: 'images/H1300.jpg'
+        }, {
+            code: 'AR1000', name: '仿實木紋白', category: 'D2B', img: 'images/W1000ST28.jpg'
+        }, {
+            code: 'JM201T2', name: '美白', category: 'D2B', img: 'images/JM201T2.jpg'
+        }, {
+            code: 'ER115', name: '克拉米色', category: 'D2B', img: 'images/U115.jpg'
+        }, {
+            code: 'ER121', name: '碳黑金屬岩', category: 'D2B', img: 'images/F121.jpg'
+        }, {
+            code: 'ER325', name: '復古玫瑰', category: 'D2B', img: 'images/U325.jpg'
+        }, {
+            code: 'ER540', name: '牛仔藍', category: 'D2B', img: 'images/U540.jpg'
+        }, {
+            code: 'ER628', name: '銀灰石板', category: 'D2B', img: 'images/F628.jpg'
+        }, {
+            code: 'ER629', name: '黑金石板', category: 'D2B', img: 'images/F629.jpg'
+        }, {
+            code: 'ER636', name: '海灣綠', category: 'D2B', img: 'images/U636.jpg'
+        }, {
+            code: 'ER637', name: '水洗清水模', category: 'D2B', img: 'images/F637.jpg'
+        }, {
+            code: 'ER638', name: '銀灰清水模', category: 'D2B', img: 'images/F638.jpg'
+        }, {
+            code: 'ER642', name: '銅鏽清水模', category: 'D2B', img: 'images/F642.jpg'
+        }, {
+            code: 'ER646', name: '藍綠色', category: 'D2B', img: 'images/U646.jpg'
+        }, {
+            code: 'ER702', name: '米灰色羊絨', category: 'D2B', img: 'images/U702ST9.jpg'
+        }, {
+            code: 'ER708', name: '淺灰色', category: 'D2B', img: 'images/U708.jpg'
+        }, {
+            code: 'ER727', name: '石頭灰', category: 'D2B', img: 'images/U727ST9.jpg'
+        }, {
+            code: 'ER732', name: '深灰色', category: 'D2B', img: 'images/U732.jpg'
+        }, {
+            code: 'ER780', name: '花崗岩灰', category: 'D2B', img: 'images/U732.jpg'
+        }, {
+            code: 'ER928', name: '優質白', category: 'D2B', img: 'images/W928.jpg'
+        }, {
+            code: 'ER960', name: '瑪瑙灰', category: 'D2B', img: 'images/U960.jpg'
+        }, {
+            code: 'ER1150', name: '自然灰橡木', category: 'D2B', img: 'images/H1150.jpg'
+        }, {
+            code: 'ER1145', name: '自然巴多利諾橡木', category: 'D2B', img: 'images/H1145.jpg'
+        }, {
+            code: 'ER1267', name: '鄉村梣木', category: 'D2B', img: 'images/H1267.jpg'
+        }, {
+            code: 'ER1277', name: '淺色萊克蘭刺槐', category: 'D2B', img: 'images/H1277.jpg'
+        }, {
+            code: 'ER1710', name: '肯塔基沙粉板栗木', category: 'D2B', img: 'images/H1710.jpg'
+        }, {
+            code: 'ER3060', name: '白色北歐木', category: 'D2B', img: 'images/H3060.jpg'
+        }, {
+            code: 'ER3078', name: '珍珠白梣木', category: 'D2B', img: 'images/H3078.jpg'
+        }, {
+            code: 'ER3081', name: '碳黑梣木', category: 'D2B', img: 'images/H3081.jpg'
+        }, {
+            code: 'ER3133', name: '松露棕達沃斯橡木', category: 'D2B', img: 'images/H3133.jpg'
+        }, {
+            code: 'ER3156', name: '灰色科布里奇橡木', category: 'D2B', img: 'images/H3156.jpg'
+        }, {
+            code: 'ER3450', name: '白弗利特木', category: 'D2B', img: 'images/H3450.jpg'
+        }, {
+            code: 'ER3430', name: '米白奧蘭松木', category: 'D2B', img: 'images/H3430.jpg'
+        }, {
             code: 'S-909', name: '現代清水模', category: 'W8A', img: 'images/stone1.png'
+        }, {
+            code: 'S-915', name: '皇家大理石', category: 'W8A', img: 'images/stone2.png'
         }];
 
-        // 從 LocalStorage 載入資料，若無則使用預設資料
+        // 從 LocalStorage 載入資料，若無則使用預設清單
         let boardTextures = JSON.parse(localStorage.getItem('boardTextures')) || defaultTextures;
 
         const grid = document.getElementById('colorGrid');
@@ -504,31 +616,113 @@
             });
         });
 
-        // 彈出視窗控制 (單筆新增)
-        openModalBtn.addEventListener('click', () => {
-            addModal.style.display = 'flex';
-        });
+        // 彈出視窗控制 (單筆新增) - 加上防呆確保按鈕存在才綁定
+        if (openModalBtn && addModal) {
+            openModalBtn.addEventListener('click', () => {
+                addModal.style.display = 'flex';
+            });
+        }
 
-        closeModalBtn.addEventListener('click', () => {
-            addModal.style.display = 'none';
-        });
+        if (closeModalBtn && addModal) {
+            closeModalBtn.addEventListener('click', () => {
+                addModal.style.display = 'none';
+            });
+        }
+
+        // 點擊 Modal 灰色背景也能關閉
+        if (addModal) {
+            addModal.addEventListener('click', (e) => {
+                if (e.target === addModal) {
+                    addModal.style.display = 'none';
+                }
+            });
+        }
 
         // 儲存單筆新板材
-        saveBoardBtn.addEventListener('click', () => {
-            const code = inputCode.value.trim();
-            const name = inputName.value.trim();
-            const category = inputCategory.value;
-            const img = inputImg.value.trim() || 'images/default.jpg';
+        if (saveBoardBtn) {
+            saveBoardBtn.addEventListener('click', () => {
+                const code = inputCode.value.trim();
+                const name = inputName.value.trim();
+                const category = inputCategory.value;
+                const img = inputImg.value.trim() || 'images/default.jpg';
 
-            if (!code || !name) {
-                alert('請填寫完整色號與名稱！');
-                return;
-            }
+                if (!code || !name) {
+                    alert('請填寫完整色號與名稱！');
+                    return;
+                }
 
-            boardTextures.unshift({ code, name, category, img });
-            localStorage.setItem('boardTextures', JSON.stringify(boardTextures));
+                boardTextures.unshift({ code, name, category, img });
+                localStorage.setItem('boardTextures', JSON.stringify(boardTextures));
 
-            inputCode.value = '';
-            inputName.value = '';
-            inputImg.value = 'images/';
-            addModal.
+                inputCode.value = '';
+                inputName.value = '';
+                inputImg.value = 'images/';
+                addModal.style.display = 'none';
+
+                renderTextures();
+                alert(`成功新增色號：${code}`);
+            });
+        }
+
+        // Excel (.xlsx) 智慧匯入功能
+        const excelInput = document.getElementById('excelFileInput');
+        if (excelInput) {
+            excelInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        
+                        let updateCount = 0;
+                        let newCount = 0;
+
+                        jsonData.forEach((row, index) => {
+                            if (index === 0 || !row || row.length === 0) return;
+                            
+                            const code = row[0] ? String(row[0]).trim() : '';
+                            const name = row[1] ? String(row[1]).trim() : '';
+                            const category = row[2] ? String(row[2]).trim() : 'D2A';
+                            const img = row[3] ? String(row[3]).trim() : `images/${code}.jpg`;
+
+                            if (code && name) {
+                                const existingIndex = boardTextures.findIndex(b => b.code.toLowerCase() === code.toLowerCase());
+                                const boardData = { code, name, category, img };
+
+                                if (existingIndex > -1) {
+                                    boardTextures[existingIndex] = boardData;
+                                    updateCount++;
+                                } else {
+                                    boardTextures.unshift(boardData);
+                                    newCount++;
+                                }
+                            }
+                        });
+
+                        localStorage.setItem('boardTextures', JSON.stringify(boardTextures));
+                        renderTextures();
+                        
+                        alert(`Excel 匯入完成！\n新增了 ${newCount} 筆新色號\n更新了 ${updateCount} 筆既有色號`);
+                    } catch (error) {
+                        alert('讀取 Excel 發生錯誤，請確認檔案格式是否正確！');
+                        console.error(error);
+                    }
+                    e.target.value = '';
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // 初始化渲染
+        renderTextures();
+    </script>
+</body>
+
+</html>
